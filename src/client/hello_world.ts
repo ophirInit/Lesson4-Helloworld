@@ -88,10 +88,17 @@ const GREETING_SIZE = borsh.serialize(
  */
 export async function establishConnection(): Promise<void> {
   // Step 1: Connect to the Solana Devnet
+
+
+
   /* Get the connection object and retrieve the 
    version from the connection object. */
 
   //Insert the Step 1 code from the tutorial here
+
+  connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+  const version = await connection.getVersion();
+  console.log('Connection to cluster established:', version)
 }
 
 /**
@@ -102,11 +109,21 @@ export async function establishPayer(): Promise<void> {
   //Step 2: Generate a keypair - this would be an account that pays for the calls to the program
   
   //Insert the Step 2 code from the tutorial here
-  
+  payer = Keypair.generate();
+  console.log("Public Key of Payer is:", payer.publicKey);
+
+
   //Step 3: Requesting an airdrop
 
    //Insert the Step 3 code from the tutorial here
    
+  const sig = await connection.requestAirdrop(
+    payer.publicKey,
+    2 * LAMPORTS_PER_SOL,
+  );
+  
+  await connection.confirmTransaction(sig);
+  
   console.log(
     'Using account',
     payer.publicKey.toBase58(),
@@ -204,10 +221,21 @@ export async function sayHello(): Promise<void> {
   
   //Insert the Step 4 code from the tutorial here
 
+  const instruction = new TransactionInstruction({
+    keys: [{pubkey: greetedPubkey, isSigner: false, isWritable: true}],
+    programId,
+    data: Buffer.alloc(0), // All instructions are hello
+
+  });
+
   //STEP 5: Create a transaction to be sent to the blockchain containing the instruction
   
   //Insert the Step 5 code from the tutorial here
-
+  await sendAndConfirmTransaction(
+    connection,
+    new Transaction().add(instruction),
+    [payer],
+  );
 }
 
 /**
